@@ -1,4 +1,4 @@
 {
     "DESIGN_NAME": "i2cALU",
-    "VERILOG_FILES": ["dir::i2c_init.v","dir::axis_fifo.v", "dir::i2c_master.v", "dir::i2c_master_axil.v", "dir::i2c_master_wbs_8.v", "dir::i2c_master_wbs_16.v", "dir::i2c_single_reg.v","dir::i2c_slave.v", "dir::i2c_slave_axil_master.v", "dir::i2c_slave_wbm.v"]
+    "VERILOG_FILES": ["dir::i2c_master.v"]
 }
