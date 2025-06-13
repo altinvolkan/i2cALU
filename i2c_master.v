@@ -88,9 +88,9 @@ begin
 		1:
 		begin
 			if (pos_state != 0)
-				state <= pos_state;
+				state = pos_state;
 			else
-				state <= neg_state;
+				state = neg_state;
 
 			/*
 			 * Carry forward the bit being written in the previous edge
@@ -108,9 +108,9 @@ begin
 		0:
 		begin
 			if (neg_state != 0)
-					state <= neg_state;
+					state = neg_state;
 			else
-					state <= pos_state;
+					state = pos_state;
 
 			if (wr_sda_neg == 1'b1)
 				reg_sda = reg_sda_neg;
@@ -124,50 +124,50 @@ end
 
 always @(posedge i_clk)
 begin
-	pos_state <= 0;
-	wr_sda_pos <= 0;
+	pos_state = 0;
+	wr_sda_pos = 0;
 
 	case(state)
 	ST_CMD_ADDR:
 	if (i_strobe)
 	begin
-		addr <= i_addr_data[6:0];
-		cmd <= i_cmd;
+		addr = i_addr_data[6:0];
+		cmd = i_cmd;
 		if (i_cmd == 1)				// Read
-			pos_state <= ST_SEND_START;
+			pos_state = ST_SEND_START;
 		else
-			pos_state <= ST_CMD_DATA;
+			pos_state = ST_CMD_DATA;
 	end
 	else
-			pos_state <= ST_CMD_ADDR;
+			pos_state = ST_CMD_ADDR;
 
 	ST_CMD_DATA:
 	if (i_strobe)
 	begin
-		in_data <= i_addr_data;
-		pos_state <= ST_SEND_START;
+		in_data = i_addr_data;
+		pos_state = ST_SEND_START;
 	end
 
 	ST_SEND_START:
 	begin
-		wr_sda_pos <= 1;
-		reg_sda_pos <= 0;
-		pos_state <= ST_WR_ADDR;
+		wr_sda_pos = 1;
+		reg_sda_pos = 0;
+		pos_state = ST_WR_ADDR;
 	end
 	ST_SEND_STOP:
 	begin
-		wr_sda_pos <= 1;
-		reg_sda_pos <= 1;
-		pos_state <= ST_CMD_ADDR;
-		status_data_ready <= 1;
+		wr_sda_pos = 1;
+		reg_sda_pos = 1;
+		pos_state = ST_CMD_ADDR;
+		status_data_ready = 1;
 	end
 	
 	ST_SEND_ACK:
 	begin
 	/* Ack was sent last falling edge, and the slave is sampling it.
 	 * Prepare for Stop command next falling edge */
-		pos_state <= ST_SEND_STOP;
-		o_data <= in_data;
+		pos_state = ST_SEND_STOP;
+		o_data = in_data;
 	end
 	endcase
 
@@ -175,28 +175,28 @@ begin
 		if (io_sda != 0)				/* Its a write NACK */
 		begin
 			if (state == ST_CHECK_ADDR_ACK)
-				status_err_nack_addr <= 1;
+				status_err_nack_addr = 1;
 			else
-				status_err_nack_data <= 1;
-			pos_state <= ST_CMD_ADDR;	/* Back to default state; */
+				status_err_nack_data = 1;
+			pos_state = ST_CMD_ADDR;	/* Back to default state; */
 		end
 		else
 		begin
 			if (state == ST_CHECK_ADDR_ACK)
 				if (cmd == 1)
-					pos_state <= ST_RD_DATA;
+					pos_state = ST_RD_DATA;
 				else
-					pos_state <= ST_WR_DATA;
+					pos_state = ST_WR_DATA;
 			else
-				pos_state <= ST_SEND_STOP;
+				pos_state = ST_SEND_STOP;
 		end
 
 	if (state == ST_RD_DATA)
 	begin
 		if (pos_count > 0)
 		begin
-			in_data[pos_count-1] <= io_sda;	// pos_count = 8..1
-			pos_count <= pos_count - 1'b1;
+			in_data[pos_count-1] = io_sda;	// pos_count = 8..1
+			pos_count = pos_count - 1'b1;
 		end
 		if (pos_count == 1)
 		begin
@@ -204,41 +204,41 @@ begin
 			 * We just read the last data bit. Prepare to put Ack on the bus on the
 			 * next falling edge.
 			 */
-			 pos_state <= ST_SEND_ACK;
-			 pos_count <= 8;
+			 pos_state = ST_SEND_ACK;
+			 pos_count = 8;
 		end
 		else
 			/*
 			 * More bits to go, continue to read
 			 */
-			pos_state <= ST_RD_DATA;
+			pos_state = ST_RD_DATA;
 	end
 end
 
 always @(negedge i_clk)
 begin
-	neg_state <= 0;
-	wr_sda_neg <= 0; /* Always release bus on next falling edge by default */
+	neg_state = 0;
+	wr_sda_neg = 0; /* Always release bus on next falling edge by default */
 
 	if (state == ST_WR_DATA || state == ST_WR_ADDR)
 	begin
 		if (neg_count == 1)
 		begin
-			neg_count <= 9;			/* Reset counter for future use */
+			neg_count = 9;			/* Reset counter for future use */
 			if (state == ST_WR_DATA)
-				neg_state <= ST_CHECK_WR_ACK;
+				neg_state = ST_CHECK_WR_ACK;
 			else
-				neg_state <= ST_CHECK_ADDR_ACK;
+				neg_state = ST_CHECK_ADDR_ACK;
 		end
 		else
 		begin
-			wr_sda_neg <= 1;
+			wr_sda_neg = 1;
 			if (state == ST_WR_DATA)
-				reg_sda_neg <= in_data[neg_count - 2]; /* neg_count = 9..2 */
+				reg_sda_neg = in_data[neg_count - 2]; /* neg_count = 9..2 */
 			else
-				reg_sda_neg <= addr_cmd[neg_count - 2];
-			neg_count <= neg_count - 1'b1;
-			neg_state <= state;		/* Continue to write data or address */
+				reg_sda_neg = addr_cmd[neg_count - 2];
+			neg_count = neg_count - 1'b1;
+			neg_state = state;		/* Continue to write data or address */
 		end
 	end
 
@@ -249,8 +249,8 @@ begin
 		 * Incase of stop command, next rising edge will pull line high.
 		 * Incase of Ack, next rising edge will keep line low to signal Ack.
 		 */
-		wr_sda_neg <= 1;
-		reg_sda_neg <= 0;
+		wr_sda_neg = 1;
+		reg_sda_neg = 0;
 	end
 end
 endmodule
